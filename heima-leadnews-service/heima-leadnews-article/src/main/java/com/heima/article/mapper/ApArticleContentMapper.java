@@ -1,9 +1,11 @@
 package com.heima.article.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.heima.model.common.constants.ArticleConstants;
+import com.heima.model.article.pojos.ApArticleContent;
 import org.mapstruct.Mapper;
+import org.springframework.stereotype.Repository;
 
 @Mapper
-public interface ApArticleContentMapper extends BaseMapper<ArticleConstants> {
+@Repository
+public interface ApArticleContentMapper extends BaseMapper<ApArticleContent> {
 }

@@ -1,10 +1,11 @@
-package com.heima.article.test;
+package com.heima.article;
 
 
 import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.article.ArticleApplication;
 import com.heima.article.mapper.ApArticleContentMapper;
+
 import com.heima.article.mapper.ApArticleMapper;
 import com.heima.file.service.FileStorageService;
 import com.heima.model.article.pojos.ApArticle;
@@ -34,7 +35,6 @@ public class ArticleFreemarkerTest {
     @Autowired
     private FileStorageService fileStorageService;
 
-
     @Autowired
     private ApArticleMapper apArticleMapper;
 
@@ -43,8 +43,7 @@ public class ArticleFreemarkerTest {
 
     @Test
     public void createStaticUrlTest() throws Exception {
-        //1.获取文章内容
-        ApArticleContent apArticleContent = apArticleContentMapper.selectOne(Wrappers.<ApArticleContent>lambdaQuery().eq(ApArticleContent::getArticleId, 1404705243362627586L));
+        ApArticleContent apArticleContent = apArticleContentMapper.selectOne(Wrappers.<ApArticleContent>lambdaQuery().eq(ApArticleContent::getArticleId, 1302864436297482242L));
         if(apArticleContent != null && StringUtils.isNotBlank(apArticleContent.getContent())){
             //2.文章内容通过freemarker生成html文件
             StringWriter out = new StringWriter();
@@ -64,7 +63,6 @@ public class ArticleFreemarkerTest {
             article.setId(apArticleContent.getArticleId());
             article.setStaticUrl(path);
             apArticleMapper.updateById(article);
-
         }
     }
 }
