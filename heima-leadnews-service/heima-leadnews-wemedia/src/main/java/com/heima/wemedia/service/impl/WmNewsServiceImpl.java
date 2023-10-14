@@ -93,7 +93,7 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         }
 
         WmNews wmNews = new WmNews();
-        BeanUtils.copyProperties(wmNewsDto, wmNews);
+        BeanUtils.copyProperties(wmNews, wmNewsDto);
         if (CollectionUtils.isNotEmpty(wmNewsDto.getImages())) {
             wmNews.setImages(StringUtils.join(wmNewsDto.getImages(), ","));
         }

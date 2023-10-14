@@ -35,6 +35,6 @@ public class WmNewsController {
     @PostMapping("/submit")
     @ApiOperation(value = "上传新闻")
     public ResponseResult submitNews(@RequestBody WmNewsDto wmNewsDto) {
-        return null;
+        return wmNewsService.submit(wmNewsDto);
     }
 }
