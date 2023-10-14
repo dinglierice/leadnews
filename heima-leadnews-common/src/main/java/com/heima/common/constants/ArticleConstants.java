@@ -1,4 +1,4 @@
-package com.heima.model.common.constants;
+package com.heima.common.constants;
 
 /**
  * @description：TODO
