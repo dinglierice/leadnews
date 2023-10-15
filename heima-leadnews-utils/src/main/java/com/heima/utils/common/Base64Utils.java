@@ -4,7 +4,6 @@ import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
 public class Base64Utils {
-
     /**
      * 解码
      * @param base64
