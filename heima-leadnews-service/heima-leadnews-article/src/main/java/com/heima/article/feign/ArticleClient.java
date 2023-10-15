@@ -7,6 +7,7 @@ import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.common.dtos.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ import javax.annotation.Resource;
  * @date：2023/10/15 10:32
  */
 @RestController
+@Primary
 @Api(value = "app文章服务",tags = "app文章服务")
 public class ArticleClient implements IArticleClient {
     @Resource
