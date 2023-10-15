@@ -1,13 +1,23 @@
 package com.heima.article.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.heima.article.mapper.ApArticleConfigMapper;
+import com.heima.article.mapper.ApArticleContentMapper;
 import com.heima.article.mapper.ApArticleMapper;
 import com.heima.article.service.ApArticleService;
+import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.article.dtos.ArticleHomeDto;
 import com.heima.model.article.pojos.ApArticle;
 import com.heima.common.constants.ArticleConstants;
+import com.heima.model.article.pojos.ApArticleConfig;
+import com.heima.model.article.pojos.ApArticleContent;
 import com.heima.model.common.dtos.ResponseResult;
+import com.heima.model.common.enums.AppHttpCodeEnum;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +36,16 @@ import java.util.List;
 @Slf4j
 public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle> implements ApArticleService {
     private static final Short MAX_PAGE_SIZE = 20;
+
     @Resource
     ApArticleMapper apArticleMapper;
+
+    @Resource
+    ApArticleConfigMapper apArticleConfigMapper;
+
+    @Resource
+    ApArticleContentMapper apArticleContentMapper;
+
     @Override
     public ResponseResult<List<ApArticle>> load(Short loadType, ArticleHomeDto dto) {
 
@@ -51,5 +69,36 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
 
         //3.结果封装
         return ResponseResult.okResult2(apArticles);
+    }
+
+    @Override
+    @SneakyThrows
+    public ResponseResult saveArticle(ArticleDto articleDto) {
+        if (null == articleDto) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        ApArticle apArticle = new ApArticle();
+        BeanUtils.copyProperties(apArticle, articleDto);
+
+        if (null == articleDto.getId()) {
+            save(apArticle);
+
+            ApArticleConfig apArticleConfig = new ApArticleConfig(apArticle.getId());
+            apArticleConfigMapper.insert(apArticleConfig);
+
+            ApArticleContent apArticleContent = new ApArticleContent();
+            apArticleContent.setArticleId(apArticle.getId());
+            apArticleContentMapper.insert(apArticleContent);
+        } else {
+            updateById(apArticle);
+
+            ApArticleContent apArticleContent = apArticleContentMapper.selectOne(Wrappers.<ApArticleContent>lambdaQuery().eq(ApArticleContent::getArticleId, apArticle.getId()));
+            apArticleContent.setContent(articleDto.getContent());
+            apArticleContentMapper.updateById(apArticleContent);
+        }
+
+
+
+        return ResponseResult.okResult(apArticle.getId());
     }
 }
