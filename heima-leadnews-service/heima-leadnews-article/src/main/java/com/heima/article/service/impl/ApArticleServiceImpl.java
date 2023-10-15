@@ -7,6 +7,7 @@ import com.heima.article.mapper.ApArticleConfigMapper;
 import com.heima.article.mapper.ApArticleContentMapper;
 import com.heima.article.mapper.ApArticleMapper;
 import com.heima.article.service.ApArticleService;
+import com.heima.article.service.ArticleFreemarkerService;
 import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.article.dtos.ArticleHomeDto;
 import com.heima.model.article.pojos.ApArticle;
@@ -45,6 +46,9 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
 
     @Resource
     ApArticleContentMapper apArticleContentMapper;
+
+    @Resource
+    ArticleFreemarkerService articleFreemarkerService;
 
     @Override
     public ResponseResult<List<ApArticle>> load(Short loadType, ArticleHomeDto dto) {
@@ -97,7 +101,7 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
             apArticleContentMapper.updateById(apArticleContent);
         }
 
-
+        articleFreemarkerService.buildArticleToMinIO(apArticle, articleDto.getContent());
 
         return ResponseResult.okResult(apArticle.getId());
     }

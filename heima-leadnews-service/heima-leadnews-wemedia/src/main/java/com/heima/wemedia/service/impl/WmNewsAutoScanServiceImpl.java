@@ -1,14 +1,20 @@
 package com.heima.wemedia.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.apis.article.IArticleClient;
+import com.heima.common.tess4j.Tess4jClient;
+import com.heima.file.service.FileStorageService;
 import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.wemedia.pojos.WmChannel;
 import com.heima.model.wemedia.pojos.WmNews;
+import com.heima.model.wemedia.pojos.WmSensitive;
 import com.heima.model.wemedia.pojos.WmUser;
+import com.heima.utils.common.SensitiveWordUtil;
 import com.heima.wemedia.mapper.WmChannelMapper;
 import com.heima.wemedia.mapper.WmNewsMapper;
+import com.heima.wemedia.mapper.WmSensitiveMapper;
 import com.heima.wemedia.mapper.WmUserMapper;
 import com.heima.wemedia.service.WmNewsAutoScanService;
 import lombok.SneakyThrows;
@@ -22,7 +28,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @description：TODO
@@ -40,10 +50,19 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
     IArticleClient iArticleClient;
 
     @Resource
+    Tess4jClient tess4jClient;
+
+    @Resource
     WmChannelMapper wmChannelMapper;
 
     @Resource
     WmUserMapper wmUserMapper;
+
+    @Resource
+    FileStorageService fileStorageService;
+
+    @Resource
+    WmSensitiveMapper wmSensitiveMapper;
 
     @Override
     @Async
@@ -58,8 +77,9 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
 
             Boolean contentScanResult = scanTextResult(String.valueOf(textAndImages.get("content")), wmNews);
             Boolean imagesScanResult = scanImgResult((List<String>) textAndImages.get("images"), wmNews);
+            Boolean isSensitive = scanBySensitiveWords((String) textAndImages.get("content"), wmNews);
 
-            if (!contentScanResult || !imagesScanResult) {
+            if (!contentScanResult || !imagesScanResult || !isSensitive) {
                 return;
             }
 
@@ -73,6 +93,26 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
             updateWmNews(wmNews,(short) 9,"审核成功");
         }
 
+    }
+
+    private Boolean scanBySensitiveWords(String content, WmNews wmNews) {
+        boolean flag = true;
+
+        //获取所有的敏感词
+        List<WmSensitive> wmSensitives = wmSensitiveMapper.selectList(Wrappers.<WmSensitive>lambdaQuery().select(WmSensitive::getSensitives));
+        List<String> sensitiveList = wmSensitives.stream().map(WmSensitive::getSensitives).collect(Collectors.toList());
+
+        //初始化敏感词库
+        SensitiveWordUtil.initMap(sensitiveList);
+
+        //查看文章中是否包含敏感词
+        Map<String, Integer> map = SensitiveWordUtil.matchWords(content);
+        if(map.size() >0){
+            updateWmNews(wmNews,(short) 2,"当前文章中存在违规内容"+map);
+            flag = false;
+        }
+
+        return flag;
     }
 
     private void updateWmNews(WmNews wmNews, short status, String msg) {
@@ -106,7 +146,36 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
 
 
     private Boolean scanImgResult(List<String> images, WmNews wmNews) {
-        return true;
+        boolean flag = true;
+
+        if (images == null || images.size() == 0) {
+            return flag;
+        }
+
+        images = images.stream().distinct().collect(Collectors.toList());
+
+
+        try {
+            for (String image : images) {
+                byte[] bytes = fileStorageService.downLoadFile(image);
+
+                //byte[] 转换为bufferedImage
+                ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+                BufferedImage bufferedImage = ImageIO.read(in);
+
+                //图片识别
+                String result = tess4jClient.doOCR(bufferedImage);
+                //过滤文字
+                boolean isSensitive = scanBySensitiveWords(result, wmNews);
+                if(!isSensitive){
+                    return isSensitive;
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return flag;
     }
 
     private Boolean scanTextResult(String content, WmNews wmNews) {
