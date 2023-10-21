@@ -27,6 +27,7 @@ import com.heima.wemedia.mapper.WmNewsMaterialMapper;
 import com.heima.wemedia.service.WmChannelService;
 import com.heima.wemedia.service.WmNewsAutoScanService;
 import com.heima.wemedia.service.WmNewsService;
+import com.heima.wemedia.service.WmNewsTaskService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
@@ -95,6 +96,9 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         return result;
     }
 
+    @Resource
+    WmNewsTaskService wmNewsTaskService;
+
     @Override
     @SneakyThrows
     public ResponseResult submit(WmNewsDto wmNewsDto) {
@@ -123,7 +127,9 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
 
         saveRelativeInfo4Cover(wmNewsDto, wmNews, wmNewsDto.getImages());
 
-        wmNewsAutoScanService.autoScanWmNews(wmNews.getId());
+//        wmNewsAutoScanService.autoScanWmNews(wmNews.getId());
+        wmNewsTaskService.addNewsToTask(wmNews.getId(),wmNews.getPublishTime());
+
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 
